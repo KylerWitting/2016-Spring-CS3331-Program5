@@ -1,0 +1,112 @@
+The README is used to answer questions posed by the professor. 
+The Questions and programming assignment can be found in the PDF.
+
+Threadmentor is used to manage concurrent threads. 
+    https://www.cs.mtu.edu/~shene/NSF-3/e-Book/index.html
+    http://www.csl.mtu.edu/cs4411.ck/www/FAQ.html
+
+It has been setup and tested on Ubuntu 14.04 x64
+    make
+    ./prog5 e w t 
+		e = Eastward bound baboons 
+		w = Westward bound baboons
+		t = How many traversals each baboon completes
+
+    Warnings will be Generated, Do not mind them
+
+// --------------------------------------------------------------------------- 
+// NAME : Kyler Witting                      User ID: kmwittin 
+// PROGRAM ASSIGNMENT 5
+// FILE NAME : README
+// PROGRAM PURPOSE :
+//      The README that answers the questions from the assignment
+// ---------------------------------------------------------------------------
+
+The logic of my program is as follows. The main program takes the command 
+line arguments and if there isn't enough of them then it exits the program. If 
+there is a 0 in the command line arguments, it turns it into a 10. Then it 
+creates the specified number of eastward and westward baboon threads. 
+After creating them it waits to join all the threads. It then exits gracefully.
+Each baboon Thread goes a certain amount of times, specified by the input, then
+exits. The baboon use a monitor to maintain shared variables. Each monkey 
+crosses the rope and follows the rules of the program. It also uses a mutex 
+lock to make sure that the print statements come out in the right order. 
+Especially after Condition signals. 
+
+The program works because of monitors and mutex locks. Without those 
+tools to manage shared variables this program would be chaos. Also using 
+concurrent threads to simulate the different baboons at the same time. The rest
+of the reasons my program works is because of well thought out programming 
+skills, proper variables, and proper use of the tools availble. I will be 
+explaining the methods of the monitor below. Above I have explained the main 
+program. The baboon thread starts, goes into a loop for the set max amount 
+of times. In the loop it delays, tries to get on the rope, waits until it can, 
+climbs along the rope, the exits the rope. The loop then resets. After the loop 
+goes a set number of times the baboon exits gracefully. The GetOnRope and 
+GetOffRope Method help the baboon maintain its sanity. 
+
+GetOnRope is where most of the magic happens for this entire program. The 
+monitor begins with an if statement that calls RopeSafety method. This 
+method checks first if the monkeycount is 0. If it is 0 then it will allow 
+this thread to continue onto the roap. Also if the Turn[1]== the thread's 
+direction and Turn[0] is unflipped it will allow the thread to continue. 
+If either of these conditions are not met, getonrope will not allow the thread
+to continue onto the rope. When a thread is allowed on the thread, it first
+checks to see if there are any other threads going in the same direction 
+waiting and if the turn[0] is unflipped. If that is true, it will signal the 
+next thread to run. After it signal the thread it continues on. If turn[0] is 
+unflipped, then it will make sure that turn[1] is it's direction. This makes
+sure that when a monkey from the other side joins the queue, this side 
+doesn't send any more monkeys on the rope. The method then exits. If the 
+method does not get the safety check, it goes into the if statement. It first 
+adds one to the direction of the current thread. Then if turn[0] is not 
+flipped, it will flip turn0 and set turn1 to the direction of this thread. 
+The condition then waits for a signal from a method that is either the 
+last monkey to get accross the rope or one his buddies getting on the rope. 
+Once it gets out of the waiting queue it subtracts one from the waiting queue
+and continues on like it was a successful thread the entire time. It follows
+the same process as above for the rest of the method. 
+
+GetOffRope starts off by starting the monitor call. It then removes one from
+the count of the monkeys on the rope. The only thing that this method needs to 
+check is if this is the last monkey on the rope. If it is not then it can exit
+without anything further. If it is the last one on the rope, it sets turn[0]
+back to 1. With that it is telling the rest of the monitor that it can queue up
+more monkeys behind the current one. The rule from the program is that if a 
+monkey shows up in the opposite queue, no more monkeys can join the rope in the 
+current direction. Turn[0] == 1 means that no monkey has joined the queue from 
+the other side yet. Then the method signals the first monkey from the other 
+side to start. The next monkey waiting in line, will then be able to get all 
+his buddies started without further involvment from this method. 
+It then exits, prints its message, and unlocks the print mutex. 
+
+All of the heavy lifting and actual programming was done in thread.cpp. thread
+holds the  monitor methods and the thread class for each baboon. The baboons 
+have the same thread, whether they are east or westbound baboons. It uses 
+thread.h as it's header file. In each method or class, I use i and j as my 
+first and then second loop iterator. I use buffer array as my buffer for 
+sprintf into write. I use a static Mutex and a static Monitor so there is only 
+one copy for all the threads. The Monitor is passed the name of "Rope". The 
+Mutex requires no arguments for initilization. ID is the baboon ID for each 
+one. It is the name used to identify them while they are printing their 
+messages. Direction gives the thread what direction the baboon is going, where 
+0 is eastward and 1 is westward. Max is the max number of turns that the baboon
+thread will go before exiting. In the monitor class, in thread.cpp there are 
+many private variables that the monitor uses to track and permit the baboons 
+to cross the rope appropiatly. For the GetOnRope and GetOffRope and RopeSafety,
+they all take direction. Direction is the same as in the MonkeyThread. The 
+variables used is WaitingLine for the conditions and they are given the name 
+of the direction they are used for. MonkeyCount is set to 0 at the start and 
+keeps track of the number of monkeys on the rope. Waiting[0] holds the count 
+of monkeys waiting for the eastward and Waiting[1] holds the number of monkeys 
+waiting for the westward. They start as 0 because there is no initial monkeys 
+waiting to get on the rope. Turn[1] is the current direction that monkeys are 
+traveling on the rope. Turn[0] keeps track if a new monkey showed up and 
+changed directions. If it changes direction then there is no more monkeys 
+allowed from the oringal direction. 
+
+Each thread exits gracefully, only after finishing all the specified loops and 
+going accross the canyon a certain number of times. The baboon will always 
+print an exit print message then use the Exit() method. The thread-main will 
+wait until it can join every thread before exiting the main program. 
+My program meets the specifications of a gracefully exiting program. 
